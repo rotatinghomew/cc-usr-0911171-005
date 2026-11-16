@@ -1,0 +1,37 @@
+{
+  "context": {
+    "capacity": 20
+  },
+  "items": [
+    {
+      "id": "journey-1",
+      "owner_id": "candidate-1",
+      "events": [
+        {
+          "event_id": "event-1",
+          "type": "visit",
+          "at": "2026-11-16T09:00:00"
+        },
+        {
+          "event_id": "event-2",
+          "type": "submission",
+          "at": "2026-11-16T10:00:00"
+        },
+        {
+          "event_id": "event-3",
+          "type": "interview",
+          "at": "2026-11-16T11:00:00"
+        },
+        {
+          "event_id": "event-4",
+          "type": "intent",
+          "at": "2026-11-16T12:00:00"
+        }
+      ],
+      "demand": 1,
+      "amount": "0",
+      "effective_from": "2026-11-16",
+      "request_key": "acceptance-1"
+    }
+  ]
+}
