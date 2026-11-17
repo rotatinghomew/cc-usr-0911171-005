@@ -1,13 +1,10 @@
 from __future__ import annotations
 from ..journey_graph.attribution import JourneyAttribution
-import datetime as dt
 import decimal
-import math
 import statistics
-import ast
-from collections import Counter, defaultdict, deque
+from collections import Counter
 from dataclasses import dataclass, field
-from typing import Any, Iterable, Mapping, Sequence
+from typing import Any, Mapping
 
 class DomainError(RuntimeError):
     pass
@@ -53,21 +50,12 @@ class AttributionEngineBase:
 class AttributionEngine(AttributionEngineBase):
     def __init__(self): self.journeys=JourneyAttribution()
     def evaluate(self,item,context):
-        if item.get('events'):
-            facts=self.journeys.evaluate(item,context); accepted=bool(facts['weights']); return AnalysisResult(str(item.get('id','unknown')),accepted,decimal.Decimal('1') if accepted else decimal.Decimal('0'),() if accepted else ('no_conversion',),facts)
-        if item.get('events'):
-            facts=self.journeys.evaluate(item,context); accepted=bool(facts['weights']); return AnalysisResult(str(item.get('id','unknown')),accepted,sum((decimal.Decimal(value) for value in facts['weights'].values()),decimal.Decimal('0')),() if accepted else ('no_conversion',),facts)
-        key=str(item.get('id','unknown'));events=sorted(item.get('events',[]),key=lambda event:(event.get('at',''),event.get('event_id','')));seen=set();touches=[];conversion=None
-        for event in events:
-            event_id=str(event.get('event_id'))
-            if event_id in seen:continue
-            seen.add(event_id)
-            if event.get('type') in {'visit','view','submission','interview'}:touches.append(event)
-            if event.get('type')=='intent':conversion=event
-        reasons=[]
-        if conversion is None:reasons.append('no_conversion')
-        weights={}
-        if touches and conversion:
-            denominator=sum(range(1,len(touches)+1))
-            for index,touch in enumerate(touches,1):weights[touch['event_id']]=decimal.Decimal(index)/decimal.Decimal(denominator)
-        value=sum(weights.values(),decimal.Decimal('0'));return AnalysisResult(key,conversion is not None,value,tuple(reasons),{'touches':len(touches),'weights':{k:str(v) for k,v in weights.items()},'deduplicated_events':len(seen)})
+        if 'events' not in item:
+            return AnalysisResult(str(item.get('id','unknown')),False,decimal.Decimal('0'),('no_conversion',),{'weights':{},'touches':0,'deduplicated_events':0})
+        facts=self.journeys.evaluate(item,context)
+        weights=facts.get('weights',{})
+        accepted=bool(weights)
+        value=sum((decimal.Decimal(str(weight)) for weight in weights.values()),decimal.Decimal('0'))
+        reasons=tuple(facts.get('reasons') or ()) if not accepted else ()
+        if not reasons and not accepted: reasons=('no_conversion',)
+        return AnalysisResult(str(item.get('id','unknown')),accepted,value,reasons,facts)
